@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมแมวจับหนู</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .game-container {
+            width: 90%;
+            max-width: 900px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            padding: 40px;
+            text-align: center;
+            min-height: 600px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #555;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+
+        .cat-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .cat-option {
+            background: #f8f9fa;
+            border: 4px solid transparent;
+            border-radius: 20px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cat-option:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .cat-option.selected {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, #e8f5e8, #f0fff0);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .cat-svg {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            display: block;
+        }
+
+        .cat-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .game-area {
+            position: relative;
+            width: 100%;
+            height: 450px;
+            background: linear-gradient(135deg, #87CEEB, #98FB98);
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .cat-player, .mouse, .obstacle, .power-up {
+            position: absolute;
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+
+        .cat-player {
+            width: 40px;
+            height: 40px;
+            z-index: 10;
+        }
+
+        .mouse {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            animation: mouseWiggle 1.5s infinite ease-in-out;
+        }
+
+        @keyframes mouseWiggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .obstacle {
+            background: #8b4513;
+            border-radius: 10px;
+            border: 2px solid #654321;
+        }
+
+        .power-up {
+            width: 25px;
+            height: 25px;
+            animation: bounce 1s infinite;
+            cursor: pointer;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.1); }
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .timer {
+            color: #e74c3c;
+            font-size: 1.2rem;
+        }
+
+        .score {
+            color: #27ae60;
+            font-size: 1.2rem;
+        }
+
+        .level {
+            color: #3498db;
+            font-size: 1.2rem;
+        }
+
+        .mice-count {
+            color: #9b59b6;
+            font-size: 1.2rem;
+        }
+
+        .level-info {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .controls {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .final-score {
+            font-size: 2rem;
+            color: #4CAF50;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .caught-effect {
+            position: absolute;
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 1.2rem;
+            animation: fadeUp 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-30px); }
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #FFD700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle 0.8s ease-out forwards;
+        }
+
+        @keyframes particle {
+            0% { 
+                opacity: 1; 
+                transform: scale(1) translateY(0); 
+            }
+            100% { 
+                opacity: 0; 
+                transform: scale(0.3) translateY(-40px); 
+            }
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                height: 350px;
+            }
+            
+            .cat-player {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .mouse {
+                width: 25px;
+                height: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- หน้าเลือกตัวละคร -->
+        <div id="character-screen" class="screen active">
+            <h1>🐱 เกมแมวจับหนู 🐭</h1>
+            <h2>เลือกแมวของคุณ</h2>
+            <div class="cat-selection">
+                <div class="cat-option" data-cat="orange">
+                    <svg class="cat-svg" viewBox="0 0 100 100">
+                        <ellipse cx="50" cy="60" rx="25" ry="20" fill="#FF8C00"/>
+                        <circle cx="50" cy="45" rx="18" ry="15" fill="#FFA500"/>
+                        <polygon points="35,35 40,25 45,35" fill="#FF8C00"/>
+                        <polygon points="55,35 60,25 65,35" fill="#FF8C00"/>
+                        <circle cx="43" cy="42" r="2" fill="#000"/>
+                        <circle cx="57" cy="42" r="2" fill="#000"/>
+                        <ellipse cx="50" cy="48" rx="1.5" ry="1" fill="#000"/>
+                        <path d="M50 50 Q45 52 40 50" stroke="#000" stroke-width="1" fill="none"/>
+                        <path d="M50 50 Q55 52 60 50" stroke="#000" stroke-width="1" fill="none"/>
+                        <ellipse cx="30" cy="65" rx="8" ry="6" fill="#FF8C00"/>
+                        <ellipse cx="70" cy="65" rx="8" ry="6" fill="#FF8C00"/>
+                        <ellipse cx="50" cy="80" rx="3" ry="12" fill="#FF8C00"/>
+                    </svg>
+                    <div class="cat-name">แมวส้ม</div>
+                </div>
+                <div class="cat-option" data-cat="black">
+                    <svg class="cat-svg" viewBox="0 0 100 100">
+                        <ellipse cx="50" cy="60" rx="25" ry="20" fill="#2F2F2F"/>
+                        <circle cx="50" cy="45" rx="18" ry="15" fill="#1A1A1A"/>
+                        <polygon points="35,35 40,25 45,35" fill="#2F2F2F"/>
+                        <polygon points="55,35 60,25 65,35" fill="#2F2F2F"/>
+                        <circle cx="43" cy="42" r="2" fill="#00FF00"/>
+                        <circle cx="57" cy="42" r="2" fill="#00FF00"/>
+                        <ellipse cx="50" cy="48" rx="1.5" ry="1" fill="#FFB6C1"/>
+                        <path d="M50 50 Q45 52 40 50" stroke="#FFB6C1" stroke-width="1" fill="none"/>
+                        <path d="M50 50 Q55 52 60 50" stroke="#FFB6C1" stroke-width="1" fill="none"/>
+                        <ellipse cx="30" cy="65" rx="8" ry="6" fill="#2F2F2F"/>
+                        <ellipse cx="70" cy="65" rx="8" ry="6" fill="#2F2F2F"/>
+                        <ellipse cx="50" cy="80" rx="3" ry="12" fill="#2F2F2F"/>
+                    </svg>
+                    <div class="cat-name">แมวดำ</div>
+                </div>
+                <div class="cat-option" data-cat="brown">
+                    <svg class="cat-svg" viewBox="0 0 100 100">
+                        <ellipse cx="50" cy="60" rx="25" ry="20" fill="#8B4513"/>
+                        <circle cx="50" cy="45" rx="18" ry="15" fill="#A0522D"/>
+                        <polygon points="35,35 40,25 45,35" fill="#8B4513"/>
+                        <polygon points="55,35 60,25 65,35" fill="#8B4513"/>
+                        <circle cx="43" cy="42" r="2" fill="#000"/>
+                        <circle cx="57" cy="42" r="2" fill="#000"/>
+                        <ellipse cx="50" cy="48" rx="1.5" ry="1" fill="#000"/>
+                        <path d="M50 50 Q45 52 40 50" stroke="#000" stroke-width="1" fill="none"/>
+                        <path d="M50 50 Q55 52 60 50" stroke="#000" stroke-width="1" fill="none"/>
+                        <ellipse cx="30" cy="65" rx="8" ry="6" fill="#8B4513"/>
+                        <ellipse cx="70" cy="65" rx="8" ry="6" fill="#8B4513"/>
+                        <ellipse cx="50" cy="80" rx="3" ry="12" fill="#8B4513"/>
+                    </svg>
+                    <div class="cat-name">แมวน้ำตาล</div>
+                </div>
+                <div class="cat-option" data-cat="white">
+                    <svg class="cat-svg" viewBox="0 0 100 100">
+                        <ellipse cx="50" cy="60" rx="25" ry="20" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="1"/>
+                        <circle cx="50" cy="45" rx="18" ry="15" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="1"/>
+                        <polygon points="35,35 40,25 45,35" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="1"/>
+                        <polygon points="55,35 60,25 65,35" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="1"/>
+                        <circle cx="43" cy="42" r="2" fill="#4169E1"/>
+                        <circle cx="57" cy="42" r="2" fill="#4169E1"/>
+                        <ellipse cx="50" cy="48" rx="1.5" ry="1" fill="#FFB6C1"/>
+                        <path d="M50 50 Q45 52 40 50" stroke="#FFB6C1" stroke-width="1" fill="none"/>
+                        <path d="M50 50 Q55 52 60 50" stroke="#FFB6C1" stroke-width="1" fill="none"/>
+                        <ellipse cx="30" cy="65" rx="8" ry="6" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="1"/>
+                        <ellipse cx="70" cy="65" rx="8" ry="6" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="1"/>
+                        <ellipse cx="50" cy="80" rx="3" ry="12" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="1"/>
+                    </svg>
+                    <div class="cat-name">แมวขาว</div>
+                </div>
+                <div class="cat-option" data-cat="calico">
+                    <svg class="cat-svg" viewBox="0 0 100 100">
+                        <ellipse cx="50" cy="60" rx="25" ry="20" fill="#F8F8FF"/>
+                        <circle cx="50" cy="45" rx="18" ry="15" fill="#FFFFFF"/>
+                        <ellipse cx="40" cy="45" rx="8" ry="7" fill="#FF8C00"/>
+                        <ellipse cx="60" cy="50" rx="6" ry="5" fill="#2F2F2F"/>
+                        <ellipse cx="45" cy="65" rx="10" ry="8" fill="#8B4513"/>
+                        <polygon points="35,35 40,25 45,35" fill="#FF8C00"/>
+                        <polygon points="55,35 60,25 65,35" fill="#2F2F2F"/>
+                        <circle cx="43" cy="42" r="2" fill="#000"/>
+                        <circle cx="57" cy="42" r="2" fill="#000"/>
+                        <ellipse cx="50" cy="48" rx="1.5" ry="1" fill="#FFB6C1"/>
+                        <path d="M50 50 Q45 52 40 50" stroke="#FFB6C1" stroke-width="1" fill="none"/>
+                        <path d="M50 50 Q55 52 60 50" stroke="#FFB6C1" stroke-width="1" fill="none"/>
+                        <ellipse cx="30" cy="65" rx="8" ry="6" fill="#FF8C00"/>
+                        <ellipse cx="70" cy="65" rx="8" ry="6" fill="#F8F8FF"/>
+                        <ellipse cx="50" cy="80" rx="3" ry="12" fill="#8B4513"/>
+                    </svg>
+                    <div class="cat-name">แมวสามสี</div>
+                </div>
+            </div>
+            <button class="btn" id="start-game" disabled>เริ่มเกม</button>
+        </div>
+
+        <!-- หน้าเกม -->
+        <div id="game-screen" class="screen">
+            <div class="game-info">
+                <div class="level">ด่าน: <span id="current-level">1</span>/5</div>
+                <div class="score">คะแนน: <span id="score">0</span></div>
+                <div class="timer">เวลา: <span id="timer">1:30</span></div>
+                <div class="mice-count">หนูเหลือ: <span id="mice-left">0</span></div>
+            </div>
+            
+            <div class="level-info">
+                <div id="level-description">ด่าน 1: จับหนูพื้นฐาน - จับหนู 5 ตัวให้ได้!</div>
+            </div>
+
+            <div class="controls">
+                🎮 ใช้ลูกศร ↑↓←→ หรือ WASD เพื่อเคลื่อนที่ | คลิกในพื้นที่เพื่อเดินไป | คลิกหนูเพื่อจับ
+            </div>
+
+            <div class="game-area" id="game-area">
+                <div class="cat-player" id="cat-player"></div>
+            </div>
+
+            <button class="btn" id="pause-btn">หยุดชั่วคราว</button>
+            <button class="btn" id="reset-level">เริ่มด่านใหม่</button>
+        </div>
+
+        <!-- หน้าจบเกม -->
+        <div id="game-over-screen" class="screen">
+            <h1>🎉 เกมจบแล้ว! 🎉</h1>
+            <div class="final-score">คะแนนรวม: <span id="final-score">0</span></div>
+            <div id="game-result"></div>
+            <button class="btn" id="play-again">เล่นใหม่</button>
+        </div>
+    </div>
+
+    <script>
+        class FreeCatGame {
+            constructor() {
+                this.selectedCat = null;
+                this.currentLevel = 1;
+                this.score = 0;
+                this.timeLeft = 90;
+                this.gameActive = false;
+                this.timer = null;
+                this.catPosition = { x: 50, y: 50 };
+                this.mice = [];
+                this.obstacles = [];
+                this.powerUps = [];
+                this.miceCount = 0;
+                this.keys = {};
+                
+                this.catSvgs = {
+                    orange: `<svg viewBox="0 0 100 100" style="width:100%;height:100%">
+                        <ellipse cx="50" cy="60" rx="20" ry="16" fill="#FF8C00"/>
+                        <circle cx="50" cy="45" rx="15" ry="12" fill="#FFA500"/>
+                        <polygon points="38,38 42,28 46,38" fill="#FF8C00"/>
+                        <polygon points="54,38 58,28 62,38" fill="#FF8C00"/>
+                        <circle cx="44" cy="42" r="1.5" fill="#000"/>
+                        <circle cx="56" cy="42" r="1.5" fill="#000"/>
+                        <ellipse cx="50" cy="47" rx="1" ry="0.8" fill="#000"/>
+                        <path d="M50 48 Q46 50 42 48" stroke="#000" stroke-width="0.8" fill="none"/>
+                        <path d="M50 48 Q54 50 58 48" stroke="#000" stroke-width="0.8" fill="none"/>
+                        <ellipse cx="35" cy="62" rx="6" ry="5" fill="#FF8C00"/>
+                        <ellipse cx="65" cy="62" rx="6" ry="5" fill="#FF8C00"/>
+                        <ellipse cx="50" cy="75" rx="2.5" ry="10" fill="#FF8C00"/>
+                    </svg>`,
+                    black: `<svg viewBox="0 0 100 100" style="width:100%;height:100%">
+                        <ellipse cx="50" cy="60" rx="20" ry="16" fill="#2F2F2F"/>
+                        <circle cx="50" cy="45" rx="15" ry="12" fill="#1A1A1A"/>
+                        <polygon points="38,38 42,28 46,38" fill="#2F2F2F"/>
+                        <polygon points="54,38 58,28 62,38" fill="#2F2F2F"/>
+                        <circle cx="44" cy="42" r="1.5" fill="#00FF00"/>
+                        <circle cx="56" cy="42" r="1.5" fill="#00FF00"/>
+                        <ellipse cx="50" cy="47" rx="1" ry="0.8" fill="#FFB6C1"/>
+                        <path d="M50 48 Q46 50 42 48" stroke="#FFB6C1" stroke-width="0.8" fill="none"/>
+                        <path d="M50 48 Q54 50 58 48" stroke="#FFB6C1" stroke-width="0.8" fill="none"/>
+                        <ellipse cx="35" cy="62" rx="6" ry="5" fill="#2F2F2F"/>
+                        <ellipse cx="65" cy="62" rx="6" ry="5" fill="#2F2F2F"/>
+                        <ellipse cx="50" cy="75" rx="2.5" ry="10" fill="#2F2F2F"/>
+                    </svg>`,
+                    brown: `<svg viewBox="0 0 100 100" style="width:100%;height:100%">
+                        <ellipse cx="50" cy="60" rx="20" ry="16" fill="#8B4513"/>
+                        <circle cx="50" cy="45" rx="15" ry="12" fill="#A0522D"/>
+                        <polygon points="38,38 42,28 46,38" fill="#8B4513"/>
+                        <polygon points="54,38 58,28 62,38" fill="#8B4513"/>
+                        <circle cx="44" cy="42" r="1.5" fill="#000"/>
+                        <circle cx="56" cy="42" r="1.5" fill="#000"/>
+                        <ellipse cx="50" cy="47" rx="1" ry="0.8" fill="#000"/>
+                        <path d="M50 48 Q46 50 42 48" stroke="#000" stroke-width="0.8" fill="none"/>
+                        <path d="M50 48 Q54 50 58 48" stroke="#000" stroke-width="0.8" fill="none"/>
+                        <ellipse cx="35" cy="62" rx="6" ry="5" fill="#8B4513"/>
+                        <ellipse cx="65" cy="62" rx="6" ry="5" fill="#8B4513"/>
+                        <ellipse cx="50" cy="75" rx="2.5" ry="10" fill="#8B4513"/>
+                    </svg>`,
+                    white: `<svg viewBox="0 0 100 100" style="width:100%;height:100%">
+                        <ellipse cx="50" cy="60" rx="20" ry="16" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="0.5"/>
+                        <circle cx="50" cy="45" rx="15" ry="12" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="0.5"/>
+                        <polygon points="38,38 42,28 46,38" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="0.5"/>
+                        <polygon points="54,38 58,28 62,38" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="0.5"/>
+                        <circle cx="44" cy="42" r="1.5" fill="#4169E1"/>
+                        <circle cx="56" cy="42" r="1.5" fill="#4169E1"/>
+                        <ellipse cx="50" cy="47" rx="1" ry="0.8" fill="#FFB6C1"/>
+                        <path d="M50 48 Q46 50 42 48" stroke="#FFB6C1" stroke-width="0.8" fill="none"/>
+                        <path d="M50 48 Q54 50 58 48" stroke="#FFB6C1" stroke-width="0.8" fill="none"/>
+                        <ellipse cx="35" cy="62" rx="6" ry="5" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="0.5"/>
+                        <ellipse cx="65" cy="62" rx="6" ry="5" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="0.5"/>
+                        <ellipse cx="50" cy="75" rx="2.5" ry="10" fill="#F8F8FF" stroke="#E0E0E0" stroke-width="0.5"/>
+                    </svg>`,
+                    calico: `<svg viewBox="0 0 100 100" style="width:100%;height:100%">
+                        <ellipse cx="50" cy="60" rx="20" ry="16" fill="#F8F8FF"/>
+                        <circle cx="50" cy="45" rx="15" ry="12" fill="#FFFFFF"/>
+                        <ellipse cx="42" cy="45" rx="6" ry="5" fill="#FF8C00"/>
+                        <ellipse cx="58" cy="50" rx="5" ry="4" fill="#2F2F2F"/>
+                        <ellipse cx="46" cy="62" rx="8" ry="6" fill="#8B4513"/>
+                        <polygon points="38,38 42,28 46,38" fill="#FF8C00"/>
+                        <polygon points="54,38 58,28 62,38" fill="#2F2F2F"/>
+                        <circle cx="44" cy="42" r="1.5" fill="#000"/>
+                        <circle cx="56" cy="42" r="1.5" fill="#000"/>
+                        <ellipse cx="50" cy="47" rx="1" ry="0.8" fill="#FFB6C1"/>
+                        <path d="M50 48 Q46 50 42 48" stroke="#FFB6C1" stroke-width="0.8" fill="none"/>
+                        <path d="M50 48 Q54 50 58 48" stroke="#FFB6C1" stroke-width="0.8" fill="none"/>
+                        <ellipse cx="35" cy="62" rx="6" ry="5" fill="#FF8C00"/>
+                        <ellipse cx="65" cy="62" rx="6" ry="5" fill="#F8F8FF"/>
+                        <ellipse cx="50" cy="75" rx="2.5" ry="10" fill="#8B4513"/>
+                    </svg>`
+                };
+
+                this.levelConfigs = [
+                    { mice: 5, obstacles: 0, description: 'ด่าน 1: จับหนูพื้นฐาน - จับหนู 5 ตัวให้ได้!' },
+                    { mice: 7, obstacles: 2, description: 'ด่าน 2: หนูเร็วขึ้น - จับหนู 7 ตัวให้ได้!' },
+                    { mice: 10, obstacles: 4, description: 'ด่าน 3: มีสิ่งกีดขวาง - จับหนู 10 ตัวให้ได้!' },
+                    { mice: 12, obstacles: 6, description: 'ด่าน 4: หนูซ่อนตัว - จับหนู 12 ตัวให้ได้!' },
+                    { mice: 15, obstacles: 8, description: 'ด่าน 5: ด่านสุดท้าย - จับหนู 15 ตัวให้ได้!' }
+                ];
+
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                // เลือกแมว
+                document.querySelectorAll('.cat-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        document.querySelectorAll('.cat-option').forEach(opt => opt.classList.remove('selected'));
+                        option.classList.add('selected');
+                        this.selectedCat = option.dataset.cat;
+                        document.getElementById('start-game').disabled = false;
+                    });
+                });
+
+                // เริ่มเกม
+                document.getElementById('start-game').addEventListener('click', () => {
+                    this.startGame();
+                });
+
+                // ปุ่มต่างๆ
+                document.getElementById('pause-btn').addEventListener('click', () => {
+                    this.togglePause();
+                });
+
+                document.getElementById('reset-level').addEventListener('click', () => {
+                    this.resetCurrentLevel();
+                });
+
+                document.getElementById('play-again').addEventListener('click', () => {
+                    this.resetGame();
+                });
+
+                // ควบคุมด้วยคีย์บอร์ด
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.key.toLowerCase()] = true;
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+
+                // คลิกเพื่อเดิน
+                document.getElementById('game-area').addEventListener('click', (e) => {
+                    if (this.gameActive && e.target.id === 'game-area') {
+                        const rect = e.target.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        this.moveToPosition(x, y);
+                    }
+                });
+            }
+
+            startGame() {
+                this.showScreen('game-screen');
+                this.resetGameState();
+                this.setupLevel();
+                this.startTimer();
+                this.gameActive = true;
+                this.startGameLoop();
+                
+                // อัพเดทแมวที่เลือก
+                document.getElementById('cat-player').innerHTML = this.catSvgs[this.selectedCat];
+            }
+
+            resetGameState() {
+                this.currentLevel = 1;
+                this.score = 0;
+                this.timeLeft = 90;
+                this.catPosition = { x: 50, y: 50 };
+                this.updateUI();
+            }
+
+            setupLevel() {
+                const config = this.levelConfigs[this.currentLevel - 1];
+                document.getElementById('level-description').textContent = config.description;
+                
+                this.clearGameArea();
+                this.createMice(config.mice);
+                this.createObstacles(config.obstacles);
+                this.createPowerUps();
+                this.updateCatPosition();
+                this.updateUI();
+            }
+
+            clearGameArea() {
+                const gameArea = document.getElementById('game-area');
+                const elementsToRemove = gameArea.querySelectorAll('.mouse, .obstacle, .power-up, .caught-effect, .particle');
+                elementsToRemove.forEach(el => el.remove());
+                this.mice = [];
+                this.obstacles = [];
+                this.powerUps = [];
+            }
+
+            createMice(count) {
+                const gameArea = document.getElementById('game-area');
+                this.miceCount = count;
+                
+                for (let i = 0; i < count; i++) {
+                    const mouse = document.createElement('div');
+                    mouse.className = 'mouse';
+                    mouse.innerHTML = '🐭';
+                    
+                    let x, y;
+                    do {
+                        x = Math.random() * (gameArea.offsetWidth - 30);
+                        y = Math.random() * (gameArea.offsetHeight - 30);
+                    } while (this.getDistance(x, y, this.catPosition.x, this.catPosition.y) < 100);
+                    
+                    mouse.style.left = x + 'px';
+                    mouse.style.top = y + 'px';
+                    
+                    mouse.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.catchMouse(mouse);
+                    });
+                    
+                    gameArea.appendChild(mouse);
+                    this.mice.push({
+                        element: mouse,
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 2,
+                        vy: (Math.random() - 0.5) * 2
+                    });
+                }
+            }
+
+            createObstacles(count) {
+                const gameArea = document.getElementById('game-area');
+                
+                for (let i = 0; i < count; i++) {
+                    const obstacle = document.createElement('div');
+                    obstacle.className = 'obstacle';
+                    
+                    const width = 60 + Math.random() * 40;
+                    const height = 20 + Math.random() * 20;
+                    
+                    obstacle.style.width = width + 'px';
+                    obstacle.style.height = height + 'px';
+                    obstacle.style.left = Math.random() * (gameArea.offsetWidth - width) + 'px';
+                    obstacle.style.top = Math.random() * (gameArea.offsetHeight - height) + 'px';
+                    
+                    gameArea.appendChild(obstacle);
+                    this.obstacles.push({
+                        element: obstacle,
+                        x: parseFloat(obstacle.style.left),
+                        y: parseFloat(obstacle.style.top),
+                        width: width,
+                        height: height
+                    });
+                }
+            }
+
+            createPowerUps() {
+                const gameArea = document.getElementById('game-area');
+                
+                if (Math.random() < 0.4) {
+                    const powerUp = document.createElement('div');
+                    powerUp.className = 'power-up';
+                    powerUp.innerHTML = '⭐';
+                    
+                    const x = Math.random() * (gameArea.offsetWidth - 25);
+                    const y = Math.random() * (gameArea.offsetHeight - 25);
+                    
+                    powerUp.style.left = x + 'px';
+                    powerUp.style.top = y + 'px';
+                    
+                    powerUp.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.collectPowerUp(powerUp);
+                    });
+                    
+                    gameArea.appendChild(powerUp);
+                    this.powerUps.push({
+                        element: powerUp,
+                        x: x,
+                        y: y
+                    });
+                }
+            }
+
+            startGameLoop() {
+                const gameLoop = () => {
+                    if (this.gameActive) {
+                        this.updateCatMovement();
+                        this.updateMice();
+                        this.checkCollisions();
+                        requestAnimationFrame(gameLoop);
+                    }
+                };
+                gameLoop();
+            }
+
+            updateCatMovement() {
+                const speed = 3;
+                let moved = false;
+                
+                if (this.keys['arrowup'] || this.keys['w']) {
+                    this.catPosition.y = Math.max(0, this.catPosition.y - speed);
+                    moved = true;
+                }
+                if (this.keys['arrowdown'] || this.keys['s']) {
+                    this.catPosition.y = Math.min(410, this.catPosition.y + speed);
+                    moved = true;
+                }
+                if (this.keys['arrowleft'] || this.keys['a']) {
+                    this.catPosition.x = Math.max(0, this.catPosition.x - speed);
+                    moved = true;
+                }
+                if (this.keys['arrowright'] || this.keys['d']) {
+                    this.catPosition.x = Math.min(860, this.catPosition.x + speed);
+                    moved = true;
+                }
+                
+                if (moved) {
+                    this.updateCatPosition();
+                }
+            }
+
+            updateCatPosition() {
+                const catElement = document.getElementById('cat-player');
+                catElement.style.left = this.catPosition.x + 'px';
+                catElement.style.top = this.catPosition.y + 'px';
+            }
+
+            moveToPosition(targetX, targetY) {
+                const dx = targetX - this.catPosition.x - 20;
+                const dy = targetY - this.catPosition.y - 20;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 5) {
+                    const speed = 4;
+                    this.catPosition.x += (dx / distance) * speed;
+                    this.catPosition.y += (dy / distance) * speed;
+                    
+                    this.catPosition.x = Math.max(0, Math.min(860, this.catPosition.x));
+                    this.catPosition.y = Math.max(0, Math.min(410, this.catPosition.y));
+                    
+                    this.updateCatPosition();
+                }
+            }
+
+            updateMice() {
+                this.mice.forEach(mouse => {
+                    // เคลื่อนที่แบบสุ่ม
+                    mouse.x += mouse.vx;
+                    mouse.y += mouse.vy;
+                    
+                    // ตีกลับเมื่อชนขอบ
+                    if (mouse.x <= 0 || mouse.x >= 870) mouse.vx *= -1;
+                    if (mouse.y <= 0 || mouse.y >= 420) mouse.vy *= -1;
+                    
+                    // จำกัดขอบเขต
+                    mouse.x = Math.max(0, Math.min(870, mouse.x));
+                    mouse.y = Math.max(0, Math.min(420, mouse.y));
+                    
+                    // หนีแมว
+                    const distanceToCat = this.getDistance(mouse.x, mouse.y, this.catPosition.x, this.catPosition.y);
+                    if (distanceToCat < 80) {
+                        const escapeSpeed = 2;
+                        const dx = mouse.x - this.catPosition.x;
+                        const dy = mouse.y - this.catPosition.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance > 0) {
+                            mouse.vx = (dx / distance) * escapeSpeed;
+                            mouse.vy = (dy / distance) * escapeSpeed;
+                        }
+                    }
+                    
+                    // เปลี่ยนทิศทางแบบสุ่ม
+                    if (Math.random() < 0.02) {
+                        mouse.vx = (Math.random() - 0.5) * 3;
+                        mouse.vy = (Math.random() - 0.5) * 3;
+                    }
+                    
+                    // อัพเดทตำแหน่ง
+                    mouse.element.style.left = mouse.x + 'px';
+                    mouse.element.style.top = mouse.y + 'px';
+                });
+            }
+
+            checkCollisions() {
+                // ตรวจสอบการจับหนูโดยการเข้าใกล้
+                this.mice.forEach((mouse, index) => {
+                    const distance = this.getDistance(
+                        this.catPosition.x + 20, this.catPosition.y + 20,
+                        mouse.x + 15, mouse.y + 15
+                    );
+                    
+                    if (distance < 35) {
+                        this.catchMouse(mouse.element);
+                    }
+                });
+
+                // ตรวจสอบการเก็บพาวเวอร์อัพ
+                this.powerUps.forEach((powerUp, index) => {
+                    const distance = this.getDistance(
+                        this.catPosition.x + 20, this.catPosition.y + 20,
+                        powerUp.x + 12, powerUp.y + 12
+                    );
+                    
+                    if (distance < 30) {
+                        this.collectPowerUp(powerUp.element);
+                    }
+                });
+            }
+
+            getDistance(x1, y1, x2, y2) {
+                return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+            }
+
+            catchMouse(mouseElement) {
+                if (!this.gameActive) return;
+                
+                const mouseIndex = this.mice.findIndex(m => m.element === mouseElement);
+                if (mouseIndex === -1) return;
+                
+                // เอฟเฟกต์จับได้
+                this.createParticles(mouseElement.offsetLeft, mouseElement.offsetTop);
+                this.showCaughtEffect(mouseElement.offsetLeft, mouseElement.offsetTop, '+' + (50 + this.currentLevel * 10));
+                
+                // เพิ่มคะแนน
+                const points = 50 + (this.currentLevel * 10);
+                this.score += points;
+                this.miceCount--;
+                
+                // ลบหนู
+                mouseElement.remove();
+                this.mice.splice(mouseIndex, 1);
+                
+                this.updateUI();
+                this.checkLevelComplete();
+            }
+
+            collectPowerUp(powerUpElement) {
+                const powerUpIndex = this.powerUps.findIndex(p => p.element === powerUpElement);
+                if (powerUpIndex === -1) return;
+                
+                this.score += 100;
+                this.timeLeft += 15;
+                
+                this.createParticles(powerUpElement.offsetLeft, powerUpElement.offsetTop);
+                this.showCaughtEffect(powerUpElement.offsetLeft, powerUpElement.offsetTop, '+100 ⭐');
+                
+                powerUpElement.remove();
+                this.powerUps.splice(powerUpIndex, 1);
+                
+                this.updateUI();
+            }
+
+            createParticles(x, y) {
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = (x + 15) + 'px';
+                    particle.style.top = (y + 15) + 'px';
+                    particle.style.animationDelay = (i * 0.1) + 's';
+                    
+                    document.getElementById('game-area').appendChild(particle);
+                    
+                    setTimeout(() => {
+                        particle.remove();
+                    }, 800);
+                }
+            }
+
+            showCaughtEffect(x, y, text) {
+                const effect = document.createElement('div');
+                effect.className = 'caught-effect';
+                effect.textContent = text;
+                effect.style.left = x + 'px';
+                effect.style.top = y + 'px';
+                
+                document.getElementById('game-area').appendChild(effect);
+                
+                setTimeout(() => {
+                    effect.remove();
+                }, 1000);
+            }
+
+            checkLevelComplete() {
+                if (this.miceCount === 0) {
+                    this.completeLevel();
+                }
+            }
+
+            completeLevel() {
+                this.gameActive = false;
+                clearInterval(this.timer);
+                
+                const timeBonus = this.timeLeft * 5;
+                this.score += timeBonus;
+                
+                this.showCaughtEffect(400, 200, `ผ่านด่าน! +${timeBonus}`);
+                
+                if (this.currentLevel < 5) {
+                    setTimeout(() => {
+                        this.currentLevel++;
+                        this.timeLeft = 90;
+                        this.catPosition = { x: 50, y: 50 };
+                        this.setupLevel();
+                        this.startTimer();
+                        this.gameActive = true;
+                        this.startGameLoop();
+                    }, 2500);
+                } else {
+                    setTimeout(() => {
+                        this.endGame(true);
+                    }, 2500);
+                }
+            }
+
+            startTimer() {
+                this.timer = setInterval(() => {
+                    this.timeLeft--;
+                    this.updateUI();
+                    
+                    if (this.timeLeft <= 0) {
+                        this.endGame(false);
+                    }
+                }, 1000);
+            }
+
+            togglePause() {
+                if (this.gameActive) {
+                    this.gameActive = false;
+                    clearInterval(this.timer);
+                    document.getElementById('pause-btn').textContent = 'เล่นต่อ';
+                } else {
+                    this.gameActive = true;
+                    this.startTimer();
+                    this.startGameLoop();
+                    document.getElementById('pause-btn').textContent = 'หยุดชั่วคราว';
+                }
+            }
+
+            resetCurrentLevel() {
+                this.gameActive = false;
+                clearInterval(this.timer);
+                this.timeLeft = 90;
+                this.catPosition = { x: 50, y: 50 };
+                this.setupLevel();
+                this.startTimer();
+                this.gameActive = true;
+                this.startGameLoop();
+            }
+
+            endGame(completed) {
+                this.gameActive = false;
+                clearInterval(this.timer);
+                
+                document.getElementById('final-score').textContent = this.score;
+                
+                let resultText = '';
+                if (completed) {
+                    resultText = '🎉 ยินดีด้วย! คุณผ่านทุกด่านแล้ว! 🎉';
+                } else {
+                    resultText = '⏰ หมดเวลา! ลองจับหนูใหม่อีกครั้ง!';
+                }
+                
+                if (this.score >= 3000) {
+                    resultText += '<br>🏆 คะแนนสูงมาก! คุณเป็นนักล่าหนูระดับเทพ!';
+                } else if (this.score >= 1500) {
+                    resultText += '<br>⭐ คะแนนดีมาก! เก่งมาก!';
+                }
+                
+                document.getElementById('game-result').innerHTML = resultText;
+                this.showScreen('game-over-screen');
+            }
+
+            updateUI() {
+                document.getElementById('current-level').textContent = this.currentLevel;
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('mice-left').textContent = this.miceCount;
+                
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            resetGame() {
+                this.selectedCat = null;
+                this.gameActive = false;
+                clearInterval(this.timer);
+                
+                document.querySelectorAll('.cat-option').forEach(opt => opt.classList.remove('selected'));
+                document.getElementById('start-game').disabled = true;
+                
+                this.showScreen('character-screen');
+            }
+
+            showScreen(screenId) {
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                document.getElementById(screenId).classList.add('active');
+            }
+        }
+
+        // เริ่มเกม
+        const game = new FreeCatGame();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96e6d8c905f4732e',t:'MTc1NTA3Mzc4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
